@@ -1,0 +1,7 @@
+{
+  "symbol": "EUR/USD",
+  "from_date": "01/01/2020",
+  "to_date": "06/06/2025",
+  "database": "database/forex_data.db"
+}
+
