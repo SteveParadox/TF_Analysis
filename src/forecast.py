@@ -1,8 +1,11 @@
+import os
 import numpy as np
 import pandas as pd
 import logging
-from features import compute_features
-from evaluate import should_retrain
+
+from .features import compute_features
+from .features import should_retrain
+from .utils import load_model_and_features, retrain_model
 
 # === Configure Logging ===
 logger = logging.getLogger(__name__)
@@ -13,14 +16,19 @@ handler.setFormatter(formatter)
 if not logger.handlers:
     logger.addHandler(handler)
 
-def forecast_next_7_days(df, model, feature_columns, mae_history=None, retrain_callback=None, mae_threshold=0.02):
+# === Load model and features once ===
+try:
+    model, feature_columns = load_model_and_features()
+except Exception as e:
+    logger.error(f"Failed to load model: {e}")
+    raise
+
+def forecast_next_7_days(df, model, mae_history=None, retrain_callback=None, mae_threshold=0.02):
     """
     Run 7-day recursive forecast with uncertainty bands and optional retraining.
 
     Args:
         df (DataFrame): Market data with ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
-        model: Trained regression model with `.predict()`
-        feature_columns (List[str]): Feature columns used during training
         mae_history (List[float], optional): Historical MAEs to evaluate model drift
         retrain_callback (Callable, optional): Function to retrain model if needed
         mae_threshold (float): Threshold for triggering model retraining
@@ -28,7 +36,7 @@ def forecast_next_7_days(df, model, feature_columns, mae_history=None, retrain_c
     Returns:
         DataFrame with ['Date', 'Predicted_Close', 'Lower_Band', 'Upper_Band']
     """
-    logger.info("🚀 Starting 7-day forecast pipeline...")
+    logger.info("Starting 7-day forecast pipeline...")
     history = df.sort_values("Date").copy().reset_index(drop=True)
     future_preds = []
 
@@ -57,28 +65,32 @@ def forecast_next_7_days(df, model, feature_columns, mae_history=None, retrain_c
 
         tail_window = 100
         tail = compute_features(history.tail(tail_window).copy())
-        tail.fillna(method='ffill', inplace=True)
+        tail.ffill(inplace=True)
         tail.fillna(0, inplace=True)
         history.update(tail)
 
         X_next = history.iloc[[-1]].reindex(columns=feature_columns, fill_value=0)
-        y_preds = [model.predict(X_next)[0] for _ in range(10)]  # Monte Carlo style
-        y_mean = np.mean(y_preds)
-        y_std = np.std(y_preds)
-
+        #y_preds = model.predict(X_next)[0] 
+        y_preds = np.array([model.predict(X_next)[0] for _ in range(5)])
+        y_mean = y_preds.mean()
+        y_std = y_preds.std()
+    
         history.at[history.index[-1], 'Close'] = y_mean
-        future_preds.append((next_date, y_mean, y_mean - y_std, y_mean + y_std))
+        future_preds.append((next_date, y_mean))
 
-        logger.info(f"📅 {next_date.date()} → 🔮 Forecast: {y_mean:.5f} (±{y_std:.5f})")
+        logger.info(f"{next_date.date()} Forecast: {y_mean:.5f} (+/- {y_std:.5f})")
 
-    # Optional retrain logic
+    print(future_preds)
+    forecast_df = pd.DataFrame(future_preds, columns=["Date", "Predicted_Close"])
+    logger.info(" Forecasting complete.")
+    return forecast_df
+
+"""
+
     if mae_history is not None and should_retrain(mae_history, threshold=mae_threshold):
-        logger.warning("⚠️ MAE threshold exceeded. Triggering retrain callback.")
+        logger.warning(" MAE threshold exceeded. Triggering retrain callback.")
         if retrain_callback:
             retrain_callback()
         else:
-            logger.warning("❌ No retrain callback provided.")
-
-    forecast_df = pd.DataFrame(future_preds, columns=["Date", "Predicted_Close", "Lower_Band", "Upper_Band"])
-    logger.info("✅ Forecasting complete.")
-    return forecast_df
+            logger.warning(" No retrain callback provided.")
+"""

@@ -49,7 +49,7 @@ def compute_features(df):
     df['is_week_end'] = (df['dayofweek'] == 4).astype(int)
 
     df['Log_Return'] = np.log(df['Close'] / df['Close'].shift(1))
-    df['return_1d'] = df['Close'].pct_change()
+    df['return_1d'] = df['Close'].pct_change(fill_method=None)
     df['log_return_positive'] = (df['Log_Return'] > 0).astype(int)
 
     df['lag_1'] = df['Close'].shift(1)
@@ -86,8 +86,9 @@ def compute_features(df):
 
     df['momentum_3'] = df['Close'] - df['Close'].shift(3)
     df['momentum_7'] = df['Close'] - df['Close'].shift(7)
-    df['roc_3'] = df['Close'].pct_change(periods=3)
-    df['roc_7'] = df['Close'].pct_change(periods=7)
+    df['roc_3'] = df['Close'].pct_change(periods=3, fill_method=None)
+
+    df['roc_7'] = df['Close'].pct_change(periods=7, fill_method=None)
 
     df['vol_5'] = df['Close'].rolling(window=5).std()
     df['vol_10'] = df['Close'].rolling(window=10).std()
@@ -121,5 +122,5 @@ def compute_features(df):
     df['price_above_sma50'] = (df['Close'] > df['SMA_50']).astype(int)
     df['sma_crossover'] = (df['sma_5'] > df['sma_10']).astype(int)
 
-    print("🧼 Feature null check:\n", df.isna().sum().sort_values(ascending=False).head(15))
+    print(" Feature null check:\n", df.isna().sum().sort_values(ascending=False).head(15))
     return df

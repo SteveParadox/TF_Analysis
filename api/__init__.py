@@ -7,13 +7,13 @@ def create_app(config_object=None):
     app = Flask(__name__)
 
     # Load default config or user-defined
-    app.config.from_object(config_object or "forecast_app.config.DefaultConfig")
+    app.config.from_object(config_object)
 
     # Initialize logging
     configure_logging(app)
 
     # Register blueprints if modularized
-    from forecast_app.routes import main as main_blueprint
+    from .routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
     return app
