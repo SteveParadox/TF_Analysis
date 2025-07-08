@@ -59,6 +59,8 @@ def trade_from_forecast(symbol, model, feature_columns, login, password, server,
 
         today_price = df['Close'].iloc[-1]
         tomorrow_price = forecast.iloc[0]['Predicted_Close']
+        tp_price = forecast.iloc[1]['Predicted_Close']  # Set TP to second-day forecast
+
 
         current_app.logger.info(f"{symbol} — Current: {today_price:.5f}, Forecast: {tomorrow_price:.5f}")
 
@@ -124,6 +126,7 @@ def trade_from_forecast(symbol, model, feature_columns, login, password, server,
             "volume": volume,
             "type": order_type,
             "price": price,
+            "tp": tp_price,
             "deviation": 10,
             "magic": 20250707,
             "comment": "ForecastBot AutoTrade",
@@ -143,7 +146,7 @@ def trade_from_forecast(symbol, model, feature_columns, login, password, server,
                     f"Trade failed (retcode={result.retcode}): {result._asdict()}"
                 )
         else:
-            current_app.logger.info(f"Trade executed: {action} {symbol} at {price:.5f}")
+            current_app.logger.info(f"Trade executed: {action} {symbol} at {price:.5f}, TP set at {tp_price:.5f}")
 
     except Exception as ex:
         current_app.logger.exception(f"Trade execution error: {ex}")
