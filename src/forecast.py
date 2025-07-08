@@ -70,11 +70,20 @@ def forecast_next_7_days(df, model, mae_history=None, retrain_callback=None, mae
         history.update(tail)
 
         X_next = history.iloc[[-1]].reindex(columns=feature_columns, fill_value=0)
-        #y_preds = model.predict(X_next)[0] 
+
+        # Perform prediction multiple times to simulate uncertainty or variability
+        # This is especially useful when the model includes randomness (e.g., dropout in neural nets)
+        # or to estimate a prediction confidence range even with a deterministic model
+
+        # Generate 5 predictions using the same input features
         y_preds = np.array([model.predict(X_next)[0] for _ in range(5)])
+
+        # Calculate the average predicted value (point forecast)
         y_mean = y_preds.mean()
+
+        # Calculate the standard deviation to estimate uncertainty (for confidence bands)
         y_std = y_preds.std()
-    
+
         history.at[history.index[-1], 'Close'] = y_mean
         future_preds.append((next_date, y_mean))
 
@@ -83,7 +92,7 @@ def forecast_next_7_days(df, model, mae_history=None, retrain_callback=None, mae
     print(future_preds)
     forecast_df = pd.DataFrame(future_preds, columns=["Date", "Predicted_Close"])
     logger.info(" Forecasting complete.")
-    return forecast_df
+    return forecast_df, history 
 
 """
 

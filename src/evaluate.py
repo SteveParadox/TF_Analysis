@@ -32,19 +32,32 @@ def evaluate_model(name, y_true, y_pred):
     return mae, rmse, r2
 
 # === 2. Plot Predictions ===
-def plot_predictions(dates, actual, predicted, title="Actual vs Predicted Close"):
-    logger.info(f"Plotting prediction comparison: {title}")
-    plt.figure(figsize=(12, 6))
-    plt.plot(dates, actual, label="Actual", color='black')
-    plt.plot(dates, predicted, label="Predicted", color='blue', linestyle='--')
-    plt.title(f"📈 {title}")
-    plt.xlabel("Date")
-    plt.ylabel("Close Price")
-    plt.legend()
-    plt.grid(True)
+import matplotlib.pyplot as plt
+import io
+import base64
+
+def generate_forecast_plot(history, forecast_df):
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    ax.plot(history['Date'][-30:], history['Close'][-30:], label='Recent Actual', color='black')
+    ax.plot(forecast_df['Date'], forecast_df['Predicted_Close'], marker='o', linestyle='--', color='red', label='Forecast')
+
+    ax.set_title("📉 7-Day Rolling Forecast")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Close Price")
+    ax.legend()
+    ax.grid(True)
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.show()
+
+    # Convert plot to base64 PNG for return
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plot_base64 = base64.b64encode(img.read()).decode('utf-8')
+    plt.close(fig)
+    return plot_base64
+
 
 # === 3. Plot Residuals ===
 def plot_residuals(dates, actual, predicted):
