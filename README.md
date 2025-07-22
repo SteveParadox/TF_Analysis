@@ -1,90 +1,153 @@
-# TF_Analysis
-### Model	Strengths
-### Prophet	Captures seasonality, trend, and holidays
-### LSTM	Great for sequence memory, time-dependencies, and nonlinear dynamics
-### XGBoost	Captures sharp non-linear patterns and interactions
-### Random Forest (meta)	Learns how to weigh the others, adds stability and variance control
+# 💹 Forex Market Prediction Engine
 
-### Roadmap to Production Deployment
-📅 Week 1 — Model Refinement
-Objective: Reduce lag, sharpen responsiveness, boost predictive alpha.
+A powerful, production-ready machine learning system for forecasting Forex prices using a stacked ensemble of **Prophet**, **XGBoost**, and **LSTM** models — with an auto-selected **meta-model** based on performance — deployed via a **Flask web application** that supports forecasting, plotting, trading (MT5), and trade log updates.
 
-🔧 Tasks:
- Sharpen Spikes:
+## 📌 Features
 
-Add rolling_max, rolling_min, rolling_std (5, 10 days)
+- **Advanced Feature Engineering**: Technical indicators, lag-based features, volatility, momentum, etc.
+- **Triple-Model Forecasting**: Prophet (time-series), XGBoost (gradient boosting), LSTM (deep learning).
+- **Meta-Model Stacking**: Best out of Ridge, Lasso, Random Forest, Gradient Boost selected via performance benchmarking.
+- **Quantile Prediction**: Median, lower (10%), and upper (90%) quantile forecasts.
+- **Flask API**: Routes for forecast, plotting, trading, and trade logging.
+- **Live Trading Enabled**: Connected to MetaTrader5 for executing trades.
+- **OANDA Support**: API integrated and secured via `.env`.
 
-Tune max_depth, min_child_weight, gamma in XGBoost
+## 🧠 Model Pipeline Overview
 
- Lag Reduction:
+```
+Raw Data ──▶ FeatureEngineer ──▶ Train Prophet/XGBoost/LSTM ──▶ Stack with Meta-Model ──▶ Save Quantile Models ──▶ Forecast + Trade
+```
 
-Add forward indicators: price slope, MACD slope, SMA crossover angle
+## 🧪 ML Stack
 
-Use momentum or breakout features (e.g., price > last 10 high?)
+| Model       | Purpose               |
+|-------------|------------------------|
+| **Prophet** | Trend + Seasonality    |
+| **XGBoost** | Non-linear patterns    |
+| **LSTM**    | Temporal dependencies  |
 
- Retrain and re-evaluate Prophet + LSTM + XGBoost
+## 🧰 Tech Stack
 
- Check cross-validation over multiple time slices (TimeSeriesSplit)
+- `Python`, `Pandas`, `NumPy`, `Scikit-learn`, `Matplotlib`
+- `Prophet`, `XGBoost`, `TensorFlow` / `Keras`
+- `Flask`, `MetaTrader5`, `oandapyV20`
+- `.env` for environment secrets
+- `joblib` for saving models
 
- #### 2
- 📅 Week 2 — Meta Model & Robustness
-Objective: Improve stacker logic and ensure model survives edge cases.
+## 📂 Project Structure
 
-🔧 Tasks:
- Replace Random Forest with:
+```
+├── app.py
+├── models/
+│   ├── prophet.pkl
+│   ├── xgb.pkl
+│   ├── lstm.h5
+│   └── meta_model_rf.pkl
+├── src/
+│   ├── forecast.py
+│   ├── features.py
+│   ├── evaluate.py
+│   ├── mt5.py
+│   ├── utils.py
+│   └── logger.py
+├── templates/
+├── .env
+└── README.md
+```
 
-Option A: LightGBM (faster, better leaf-wise splits)
+## 🌐 Flask API Routes
 
-Option B: Shallow Neural Net (e.g., MLPRegressor with Dropout)
+| Route                  | Method | Description                                       |
+|------------------------|--------|---------------------------------------------------|
+| `/`                    | GET    | Health check.                                     |
+| `/forecast`            | GET    | Returns next 7-day forecast as JSON.             |
+| `/forecast/plot`       | GET    | Renders HTML plot with prediction & confidence.   |
+| `/trade`               | GET/POST | Auto-trades based on model signals.             |
+| `/update-trades`       | GET    | Updates log of closed trades.                    |
 
- Add input: model disagreement width (max(preds) - min(preds))
+## 🔐 Environment Variables
 
- Backtest on:
+Create a `.env` file with:
 
-Calm markets (flat)
+```env
+OANDA_API_KEY=your_oanda_api_key
+MT5_LOGIN=your_mt5_login
+MT5_PASSWORD=your_mt5_password
+MT5_SERVER=your_mt5_server_name
+```
 
-Trending spikes
+## 🚀 How to Run
 
-Reversal periods
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/yourusername/forex-predictor.git
+   cd forex-predictor
+   ```
 
- Evaluate drift: rolling MAE vs. baseline MAE
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
- #### 3
-📅 Week 3 — External Feature Integration
-Objective: Improve foresight by adding non-price signals.
+3. **Create `.env` file** (see above)
 
-🔧 Tasks:
- Add:
+4. **Run Flask app**
+   ```bash
+   python app.py
+   ```
 
-EURUSD as an external input to EURGBP
+## 📈 Forecast Sample Output
 
-FinBERT sentiment score for related keywords (optional)
+```json
+{
+  "forecast": [
+    {
+      "Date": "2025-07-23",
+      "Predicted_Close": 1.0965,
+      "Lower_Band": 1.0930,
+      "Upper_Band": 1.0999
+    },
+    ...
+  ]
+}
+```
 
-Economic calendar events (e.g., ECB, CPI days as binary flags)
+## 🧠 Model Training Summary
 
- Retrain all models with these new signals
+1. **Feature Engineering**
+   - Technical indicators (RSI, MACD, Bollinger Bands)
+   - Lag features, rolling statistics
+   - Candlestick patterns
 
- Run a 2-week walk-forward test and compare against older version
+2. **Base Models**
+   - Trained independently on engineered features.
 
-#### 4
-📅 Week 4 — Productionization & Serving
-Objective: Wrap, schedule, serve, and store.
+3. **Meta-Model Selection**
+   - Models: Ridge, Lasso, Random Forest, Gradient Boost
+   - Best model selected based on lowest validation MAE.
 
-🔧 Tasks:
- Package pipeline with:
+4. **Quantile Stacking**
+   - Three meta-models trained for 10%, 50%, 90% quantiles for confidence bands.
 
-joblib or ONNX model exports
+## ⚙️ Live Trading
 
-config.yaml for tunables
+- Uses `MetaTrader5` API.
+- Trades only on `EURUSD` symbol.
+- Uses forecast quantiles to place cautious limit orders.
+- Can be extended for more strategies & risk management.
 
- Build predict.py and serve.py scripts:
+## 📊 Plot Example
 
-predict.py → fetch data, make prediction, store to DB/CSV
+![Forecast Preview](https://yourdomain.com/path/to/sample_plot.png)
 
-serve.py → Flask/FastAPI endpoint for predictions
+## 🛠 Extending
 
- Add logs + daily retrain scheduling with cron or Airflow
+You can easily extend the system to:
+- Add more base models (LightGBM, CatBoost)
+- Use alternative data (news, sentiment)
+- Deploy via Docker / AWS / Streamlit
+- Enable backtesting or Telegram alerts
 
- (Optional) Push predictions to a web dashboard or Telegram bot
+## 🧾 License
 
- 
+MIT License © [Your Name or Org]
