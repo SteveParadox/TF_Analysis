@@ -37,7 +37,7 @@ Raw Data ──▶ FeatureEngineer ──▶ Train Prophet/XGBoost/LSTM ──�
 ## 📂 Project Structure
 
 ```
-├── app.py
+├── run.py
 ├── models/
 │   ├── prophet.pkl
 │   ├── xgb.pkl
@@ -81,7 +81,7 @@ MT5_SERVER=your_mt5_server_name
 1. **Clone the repo**
    ```bash
    git clone https://github.com/SteveParadox/TF_Analysis.git
-   cd api
+ 
    ```
 
 2. **Install dependencies**
