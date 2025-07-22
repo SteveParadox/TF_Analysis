@@ -80,8 +80,8 @@ MT5_SERVER=your_mt5_server_name
 
 1. **Clone the repo**
    ```bash
-   git clone https://github.com/yourusername/forex-predictor.git
-   cd forex-predictor
+   git clone https://github.com/SteveParadox/TF_Analysis.git
+   cd api
    ```
 
 2. **Install dependencies**
@@ -93,7 +93,7 @@ MT5_SERVER=your_mt5_server_name
 
 4. **Run Flask app**
    ```bash
-   python app.py
+   python run.py
    ```
 
 ## 📈 Forecast Sample Output
