@@ -136,10 +136,6 @@ MT5_SERVER=your_mt5_server_name
 - Uses forecast quantiles to place cautious limit orders.
 - Can be extended for more strategies & risk management.
 
-## 📊 Plot Example
-
-![Forecast Preview](https://yourdomain.com/path/to/sample_plot.png)
-
 ## 🛠 Extending
 
 You can easily extend the system to:
@@ -150,4 +146,4 @@ You can easily extend the system to:
 
 ## 🧾 License
 
-MIT License © [Your Name or Org]
+MIT License © SteveParadox
